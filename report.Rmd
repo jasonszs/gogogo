@@ -5,7 +5,9 @@ date: "August 9, 2018"
 output: html_document
 ---
 
-### Part A
+# Probability practice
+## Part A
+
 \begin{align}
 &P(RC)=0.3\\
 &P(TC)=1-0.3=0.7\\
@@ -15,7 +17,9 @@ output: html_document
 &P(No \ and \ RC)=P(RC)-P(Yes \ and \ RC)=0.3-0.15=0.15\\
 &P(Yes|TC)=\frac{P(Yes \ and \ TC)}{P(TC)}=\frac{P(Yes)-P(Yes \ and \ RC)}{0.7}=\frac{0.65-0.15}{0.7}=0.714\\
 \end{align}
-### Part B
+
+## Part B
+
 \begin{align}
 &P(Pos|D)=0.993\\
 &P(Neg|D')=0.9999\\
@@ -24,35 +28,6 @@ output: html_document
 &P(D')=1-P(D)=0.999975\\
 &P(D|Pos)=\frac{P(D \ and \ Pos)}{P(Pos)}=\frac{P(D \ and \ Pos)}{P(D \ and \ Pos)+P(D' \ and \ Pos)}=\frac{P(Pos|D) \times P(D)}{P(Pos|D) \times P(D)+P(Pos|D') \times P(D')}=\frac{0.993 \times 0.000025}{0.993 \times 0.000025+0.0001 \times 0.999975}=0.1985\\
 \end{align}
-
-
-
-# Probability practice
-## Part A
-
-From the question, we know that $P_{RC}=0.3; P_{Y|RC}=0.5; P_{Y}=0.65$.
-Therefore, we could set up equation as followed:
-$$P_{Y} = P_{Y,RC} + P_{Y,TC}$$
-$$\Rightarrow P_{Y}=P(Y | RC) * P_{RC} + P(Y | PC) * P_{TC}$$
-$$\Rightarrow 0.65 = 0.5 * 0.3 + P(Y|PC) * 0.7$$
-We got,
-$$P(Y|PC) = \frac{0.65 - 0.5*0.3}{0.7}$$
-$$\Rightarrow P(Y|PC) = \frac{5}{7}$$
-Around 71.43% of people who are truthful clickers answered yes.
-
-## Part B
-
-We want to get the probability of having the disease based on getting positive result for the test. Let's denote it as $P(T | P)$.
-
-According to the Bayes' theorem,
-$$P(T|P) = \frac{P_{T,P}}{P_{p}}$$
-$$\Rightarrow P(T|P) = \frac{P(P|T)*P_{T}}{P(P|T)*P_{T} + P(P|F)*P_{F}}$$
-According to the question, we got $P_{T}=0.000025; P(P|T)=0.993; P(P|F)=1-0.9999=0.0001$
-
-$$\Rightarrow P(T|P) = \frac{0.993*0.000025}{0.993*0.000025 + 0.0001*0.999975}$$
-
-$$\Rightarrow P(T|P) \approx 0.1989$$
-The probability of having the disease is about 19.89%.
 
 Problems in implementing a universal testing policy:
 
@@ -148,33 +123,27 @@ ggplot(data=mean_rent_green, aes(x=cluster, y=diff)) +
 ## 4. Future Estimation
 ### *"The median market rent in the non-green buildings was $25 per square foot per year, while the median market rent in the green buildings was $27.60 per square foot per year: about $2.60 more per square foot."*
 
-### Instead of revenue, we might be more interested in the future profit, which means we should also consider about the cost.
+### Instead of revenue, we might be more interested in the future profit, which means we should also consider about the cost and the occupancy rate.
 
 ```{r }
 remain["profit"]=remain["Rent"]-remain["Gas_Costs"]-remain["Electricity_Costs"]
 remain=remain[,-c(19,20)]
 
-profit_set = remain %>% group_by(green_rating) %>% summarise(mean=mean(profit))
-ggplot(data=profit_set,aes(x=green_rating,y=mean,fill=green_rating))+geom_bar(stat="identity")+ggtitle("Comparison of mean rent")
+profit_set = remain %>% group_by(green_rating) %>% summarise(mean_profit=mean(profit),mean_occupied=mean(leasing_rate))
+p1=ggplot(data=profit_set,aes(x=green_rating,y=mean_profit,fill=green_rating))+geom_bar(stat="identity")+ggtitle("Comparison of mean rent")
+p2=ggplot(data=profit_set,aes(x=green_rating,y=mean_occupied,fill=green_rating))+geom_bar(stat="identity")+ggtitle("Comparison of occupied rate")
+profit_set
+grid.arrange(p1,p2, ncol=2)
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+### Based on the results above, a normal building might gain an additional 
+### $250000*(29.3163*0.8935 - 27.2548*0.8429) = 805261$ dollars of extra revenue per year if we buil the green building.
+### Therefore, we might be able to recuperate the extra $5 million cost in around 6.2 years. Since the building will be able to earn rents for more than 30 years, "going green" is probably a good investment. 
 
 
 # Bootstrapping
 
+## Setting up the dataset including these five ETFs from 2007-01-01
 ```{r warning=FALSE,message=FALSE}
 library(mosaic)
 library(quantmod)
@@ -191,7 +160,7 @@ EEMa = adjustOHLC(EEM)
 VNQa = adjustOHLC(VNQ)
 ```
 
-## Estimate the risk/return properties of the five major asset classes
+## Estimate the risk/return properties of the five major asset classes. Here we just show the process of handling the SPY because the processes of other ETFs are the same. We will just store the result and display them together in the latter part.
 ```{r }
 set.seed("666666")
 
@@ -214,10 +183,12 @@ simSPY = foreach(i=1:5000, .combine='rbind') %do% {
 	wealthtracker
 }
 
+
+
 # Calculate 5% value at risk
 SPYVar=quantile(simSPY[,n_days], 0.05) - initial_wealth
 SPYprofit = quantile(simSPY[,n_days], 0.90) - initial_wealth
-
+SPYmean=mean(simSPY[,n_days])
 
 ```
 
@@ -246,7 +217,7 @@ simTLT = foreach(i=1:5000, .combine='rbind') %do% {
 # Calculate 5% value at risk
 TLTVar=quantile(simTLT[,n_days], 0.05) - initial_wealth
 TLTprofit = quantile(simTLT[,n_days], 0.90) - initial_wealth
-#paste("For TLT,the 5% value at risk is ",Var,". And The top 10% potential profit is ", profit)
+TLTmean=mean(simTLT[,n_days])
 
 
 ```
@@ -276,7 +247,7 @@ simLQD = foreach(i=1:5000, .combine='rbind') %do% {
 # Calculate 5% value at risk
 LQDVar=quantile(simLQD[,n_days], 0.05) - initial_wealth
 LQDprofit = quantile(simLQD[,n_days], 0.90) - initial_wealth
-#paste("For LQD,the 5% value at risk is ",Var,". And The top 10% potential profit is ", profit)
+LQDmean=mean(simLQD[,n_days])
 
 ```
 
@@ -305,7 +276,7 @@ simEEM = foreach(i=1:5000, .combine='rbind') %do% {
 # Calculate 5% value at risk
 EEMVar=quantile(simEEM[,n_days], 0.05) - initial_wealth
 EEMprofit = quantile(simEEM[,n_days], 0.90) - initial_wealth
-#paste("For EEM,the 5% value at risk is ",Var,". And The top 10% potential profit is ", profit)
+EEMmean=mean(simEEM[,n_days])
 
 ```
 
@@ -334,7 +305,7 @@ simVNQ = foreach(i=1:5000, .combine='rbind') %do% {
 # Calculate 5% value at risk
 VNQVar=quantile(simVNQ[,n_days], 0.05) - initial_wealth
 VNQprofit = quantile(simVNQ[,n_days], 0.90) - initial_wealth
-#paste("For VNQ,the 5% value at risk is ",Var,". And The top 10% potential profit is ", profit)
+VNQmean=mean(simVNQ[,n_days])
 
 ```
 
@@ -379,6 +350,9 @@ for(i in 2:5000){
 }
 ```
 
+## Observing the distribution of estimated prices and potential trends for these five ETFs, we could conclude that the EEM and VNQ are much more risky than other three ETFs. Among these three, LQD is the safest one with the smalleset variance, followed by TLT. And SPY's variance is the median of these five ETFs.
+
+
 ## The even split
 ```{r fig.height=7,fig.width=12}
 set.seed("666666")
@@ -415,8 +389,10 @@ hist(sim1[,n_days], 30, main="Estimated prices at the end day")
 hist(sim1[,n_days]- initial_wealth, breaks=30,main="Estimated profit/loss at the end day")
 
 # Calculate 5% value at risk
-Var=quantile(sim1[,n_days], 0.05) - initial_wealth
-paste("The 5% value at risk is ",Var)
+evenmean=mean(sim1[,n_days])
+evenVar=quantile(sim1[,n_days], 0.05) - initial_wealth
+paste("The 5% value at risk is ",evenVar)
+evenprofit = quantile(sim1[,n_days], 0.90) - initial_wealth
 
 par(mfrow=c(1,1))
 
@@ -426,9 +402,12 @@ for(i in 2:5000){
   lines(x,sim1[i,],col=i)
 }
 ```
+### From the graphs we can see that the even portfolio's distribution is similar to the distribution of SPY, the median of these five ETFs. And it has more outliers with high prices, which might be caused by the investment in EEM and VNQ.
+
+
 
 ## The safer choice
-From the results, we can see that SPY,TLT and LQD, especially LQD, are relatively safer choices. Therefore, we allocate 0.2,0.3,0.5 to SPY,TLT and LQD
+###From the results, we can see that SPY,TLT and LQD, especially LQD, are relatively safer choices. Therefore, we allocate 0.2,0.3,0.5 to SPY,TLT and LQD
 
 ```{r fig.height=7,fig.width=12}
 set.seed("666666")
@@ -463,8 +442,10 @@ hist(sim1[,n_days], 30, main="Estimated prices at the end day")
 hist(sim1[,n_days]- initial_wealth, breaks=30,main="Estimated profit/loss at the end day")
 
 # Calculate 5% value at risk
-Var=quantile(sim1[,n_days], 0.05) - initial_wealth
-paste("The 5% value at risk is ",Var)
+safermean=mean(sim1[,n_days])
+saferVar=quantile(sim1[,n_days], 0.05) - initial_wealth
+paste("The 5% value at risk is ",saferVar)
+saferprofit = quantile(sim1[,n_days], 0.90) - initial_wealth
 
 par(mfrow=c(1,1))
 
@@ -474,9 +455,11 @@ for(i in 2:5000){
   lines(x,sim1[i,],col=i)
 }
 ```
+### From the graphs, we can see the the safer portfolio has much smaller variance even than TLT, just a bit larger than LQD. And it has less outliers with low or high prices than LQD. The probability of significant loss is small but the probability of high return is also small.
+
 
 ## The more aggressive choice
-From the result, we can see that EEM and VNQ are more risky choices, but we still want to keep the SPY to control the risk within acceptable range. Therefore, we allocate 0.4,0.3,0.3 to SPY,EEM and VNQ.
+###From the result, we can see that EEM and VNQ are more risky choices, but we still want to keep the SPY to control the risk within acceptable range. Therefore, we allocate 0.4,0.3,0.3 to SPY,EEM and VNQ.
 ```{r fig.height=7,fig.width=12}
 set.seed("666666")
 
@@ -510,8 +493,10 @@ hist(sim1[,n_days], 30, main="Estimated prices at the end day")
 hist(sim1[,n_days]- initial_wealth, breaks=30,main="Estimated profit/loss at the end day")
 
 # Calculate 5% value at risk
-Var=quantile(sim1[,n_days], 0.05) - initial_wealth
-paste("The 5% value at risk is ",Var)
+aggmean=mean(sim1[,n_days])
+aggVar=quantile(sim1[,n_days], 0.05) - initial_wealth
+paste("The 5% value at risk is ",aggVar)
+aggprofit = quantile(sim1[,n_days], 0.90) - initial_wealth
 
 par(mfrow=c(1,1))
 
@@ -521,3 +506,15 @@ for(i in 2:5000){
   lines(x,sim1[i,],col=i)
 }
 ```
+### From the graphs, we can see that this portfolio has much larger variance.It has chance to gain significant high return, but it is also more risky than other portfolios.
+
+## Comparison of all portfolios for decision making
+```{r }
+t <- matrix(c(SPYVar,SPYmean,SPYprofit,TLTVar,TLTmean,TLTprofit,LQDVar,LQDmean,LQDprofit,EEMVar,EEMmean,EEMprofit,VNQVar,VNQmean,VNQprofit,evenVar,evenmean,evenprofit,saferVar,safermean,saferprofit,aggVar,aggmean,aggprofit),ncol=3,byrow=TRUE)
+colnames(t) <- c("5% Value at Risk","Expected return","The top 10% potential profit")
+rownames(t) <- c("SPY","TLT","LQD","EEM","VNQ","Even","Safer","Aggressive")
+t <- as.table(t)
+t
+```
+
+
